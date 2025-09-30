@@ -1,0 +1,36 @@
+name: CICD
+
+on:
+  push:
+    branches: 
+      - main
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image to Deploy'
+        required: false
+        type: string
+
+run-name: >
+  📦🚀 Application CD • ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.ref_name == 'main' && 'latest' || github.ref_name) }}
+
+jobs:
+  CI:
+    if: ${{ !(github.event.inputs.image_tag || false) }}
+    uses: GM-SDV/release-engineering/.github/workflows/java-ci.yml@main
+    secrets: inherit
+    with:
+      secret_environment: 'a1001163-vci-dev-00'
+
+  CD:
+    needs: [CI]
+    if: |
+      always()
+      && !contains(needs.*.result, 'failure')
+    uses: GM-SDV/release-engineering/.github/workflows/k8-cd.yml@main
+    secrets: inherit
+    with:
+      secret_environment: 'a1001163-vci-dev-00'
+      aks_resource_group_name: 'a1001163-d1-musea2-rg-vci'
+      aks_cluster_name: 'a1001163-d1-musea2-aks-vci'
+      aks_image_tag: ${{ github.event.inputs.image_tag || needs.CI.outputs.image_tag }}
