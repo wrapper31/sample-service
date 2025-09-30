@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  pull_request:
+    branches: 
+      - main
+  workflow_dispatch:
+
+run-name: >
+  ⚙️🔁 Application CI • ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || (github.ref_name == 'main' && 'latest' || github.ref_name) }}
+
+jobs:
+  GoLang-CI:
+    uses:  GM-SDV/release-engineering/.github/workflows/java-ci.yml@javaPipeline
+    secrets: inherit
+    with:
+      secret_environment: 'a1001163-vci-dev-00'
